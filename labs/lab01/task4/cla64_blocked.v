@@ -18,8 +18,20 @@ module cla64_blocked(
   output        cout
 );
 
-  wire [15:1] c;   // carries BETWEEN blocks: c[1]..c[15]
+  wire [15:0] c;   // carries BETWEEN blocks: c[1]..c[15]
+  genvar k;
+  generate
+    for (k = 0; k < 16; k = k + 1) begin : gen_block
+      if (k == 0) begin : first_block
+        cla4 block0 (.a(a[3:0]), .b(b[3:0]), .cin(cin), .sum(sum[3:0]), .cout(c[0]));
+      end else begin : later_block
+        cla4 blockN (.a(a[k*4+3 : k*4]), .b(b[k*4+3 : k*4]), .cin(c[k-1]),
+                     .sum(sum[k*4+3 : k*4]), .cout(c[k]));
+      end
+    end
+  endgenerate
 
+  assign cout = c[15];
   // TODO: your sixteen cla4 instances go here.
 
 endmodule

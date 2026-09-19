@@ -31,6 +31,29 @@ module cla64_flat(
       and #(2) (g[i], a[i], b[i]);
     end
   endgenerate
+  genvar k, j;
+  generate
+    for (k = 1; k <= 64; k = k + 1) begin : gen_carry
+      wire [k:0] cterm;  // cterm[0..k-1]: g-terms; cterm[k]: the cin term
+
+      for (j = 0; j < k; j = j + 1) begin : gen_gterm
+        if (j == k-1) begin : self_g
+          // top term has no p-factor: just g[k-1]
+          assign #(2) cterm[j] = g[j];
+        end else begin : pand_g
+          // p[k-1]*p[k-2]*...*p[j+1] * g[j]
+          assign #(2) cterm[j] = (&p[k-1:j+1]) & g[j];
+        end
+      end
+
+      // bottom term: p[k-1]*p[k-2]*...*p[0] * cin
+      assign #(2) cterm[k] = (&p[k-1:0]) & cin;
+
+      assign #(2) c[k] = |cterm;
+    end
+  endgenerate
+
+  assign #(2) cout = c[64];
 
   // ---------------------------------------------------------------------
   // Step 2: the 64 direct carry equations -- YOUR TASK
@@ -61,11 +84,12 @@ module cla64_flat(
   //
   // TODO: paste your verified assign statements for c[1] through c[64] here.
 
-  assign cout = c[64];
+  
 
   // ---------------------------------------------------------------------
   // Step 3: sum bits
   // ---------------------------------------------------------------------
   // TODO: assign #(2) sum = p ^ {c[63:1], cin};
+  assign #(2) sum = p ^ {c[63:1], cin};
 
 endmodule
